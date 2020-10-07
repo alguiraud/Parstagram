@@ -17,7 +17,7 @@ The following **required** functionality is completed:
 The following **bonus** features are implemented:
 
 - [x] User can pull to refresh. (1pt)
-- [x] User can load past tweets infinitely. (2pts)
+- [x] User can load past posts infinitely. (2pts)
 
 ## Video Walkthrough
 
