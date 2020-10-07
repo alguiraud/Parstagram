@@ -11,6 +11,9 @@ import Parse
 
 class feedViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
+    var numPosts: Int!
+    var refreshControl: UIRefreshControl!
+    
     @IBOutlet weak var tableView: UITableView!
     var posts = [PFObject]()
     
@@ -19,15 +22,35 @@ class feedViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         tableView.delegate = self
         tableView.dataSource = self
-        // Do any additional setup after loading the view.
+        
+        refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(self.viewDidAppear), for: .valueChanged)
+        tableView.refreshControl = refreshControl
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        numPosts = 5
         let query  = PFQuery(className: "Posts")
         query.includeKey("author")
-        query.limit = 20
+        query.limit = numPosts
+        
+        query.findObjectsInBackground { (posts, error) in
+            if posts != nil {
+                self.posts = posts!
+                self.tableView.reloadData()
+        }
+        }
+        
+        self.refreshControl.endRefreshing()
+    }
+    
+    func loadMorePosts() {
+        numPosts += 5
+        let query  = PFQuery(className: "Posts")
+        query.includeKey("author")
+        query.limit = numPosts
         
         query.findObjectsInBackground { (posts, error) in
             if posts != nil {
@@ -48,7 +71,7 @@ class feedViewController: UIViewController, UITableViewDelegate, UITableViewData
         let user = post["author"] as! PFUser
         cell.usernameLabel.text = user.username
         
-        cell.captionLabel.text = post["caption"] as! String
+        cell.captionLabel.text = (post["caption"] as! String)
         
         let imageFile = post["image"] as! PFFileObject
         let urlString = imageFile.url!
@@ -56,6 +79,12 @@ class feedViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         cell.photoView.af.setImage(withURL: url)
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.row + 1 == posts.count {
+            loadMorePosts()
+        }
     }
         
 }
